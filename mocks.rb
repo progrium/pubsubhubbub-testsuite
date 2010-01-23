@@ -2,26 +2,33 @@ require 'webrick'
 
 class Subscriber
   HOST = ENV['HOST'] || "localhost"
-  PORT = Integer(ENV['SUB_PORT']) || 8089
+  PORT = Integer(ENV['SUB_PORT'] || 8089)
   VERIFY_TOKEN = 'qfwef9'
   
-  attr_reader :callback_url
+  attr_reader :accept_callback_url, :refuse_callback_url
   attr_accessor :onrequest
   
   def initialize(hub)
     @hub = hub
     @server = WEBrick::HTTPServer.new(:Port => PORT, :Logger => WEBrick::Log.new(nil, 0), :AccessLog => WEBrick::Log.new(nil, 0))
-    @callback_url = "http://#{HOST}:#{PORT}/callback"
+    @accept_callback_url = "http://#{HOST}:#{PORT}/accept_callback_url"
+    @refuse_callback_url = "http://#{HOST}:#{PORT}/refuse_callback_url"
     @onrequest = lambda {|req|}
-    mount "/callback" do |req,res|
+    mount "/accept_callback_url" do |req,res|
       @onrequest.call(req)
       res.status = 200
-      if req.request_method == 'GET'
-        res.body = /hub.challenge=([^$|&]+)/.match(req.query_string)[1]
+      if req.request_method == 'GET' and /hub.challenge=([^$|&]+)/.match(req.query_string)
+        res.body = $1
       else
-
+        res.body = "Subscriber!"
       end
     end
+    mount "/refuse_callback_url" do |req,res|
+      @onrequest.call(req)
+      res.status = 404
+      res.body = "Nope. I refuse this subscription"
+    end
+    
     @server_thread = Thread.new do 
       trap("INT"){ @server.shutdown }
       @server.start
@@ -40,7 +47,8 @@ end
 
 
 class Publisher
-  PORT = Integer(ENV['PUB_PORT']) || 8088
+  HOST = ENV['HOST'] || "localhost"
+  PORT = Integer(ENV['PUB_PORT'] || 8088)
   
   attr_reader :content_url
   attr_reader :content
