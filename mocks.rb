@@ -32,7 +32,7 @@ class Subscriber
     end
 
     mount "/refuse_callback_url" do |req, res|
-      on_request.call(req)
+      on_request.call(req, res)
       res.status = 404
       res.body = "Nope. I refuse this subscription."
     end
@@ -52,7 +52,6 @@ class Subscriber
     @server_thread.join
   end
 end
-
 
 class Publisher
   HOST = ENV['host'] || 'localhost'
@@ -126,7 +125,7 @@ class Publisher
 </feed>
 EOF
     mount "/happycats.xml" do |req,res|
-      @on_request.call(req)
+      @on_request.call(req, res)
       @last_request_method = req.request_method
       @last_headers = req.header
       res.status = 200
