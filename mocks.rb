@@ -54,8 +54,8 @@ class Subscriber
 end
 
 class Publisher
-  HOST = ENV['host'] || 'localhost'
-  PORT = (ENV['port'] || 8088).to_i
+  HOST = ENV['PUB_HOST'] || 'localhost'
+  PORT = (ENV['PUB_PORT'] || 8088).to_i
 
   
   attr_reader :content_url
