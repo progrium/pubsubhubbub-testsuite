@@ -1,7 +1,12 @@
 require 'net/http'
 require 'uri'
 
-require 'mechanize'
+begin
+  require 'mechanize'
+rescue LoadError
+  require 'rubygems'
+  require 'mechanize'
+end
 
 class Hub
   attr_reader :endpoint
@@ -14,11 +19,11 @@ class Hub
     @is_gae = Net::HTTP.get(@endpoint.host, '/_ah/admin/queues', @endpoint.port).include?('Google')
   end
   
-  def subscribe(callback, topic, verify, verify_token=nil)
-    post_as_subscriber('subscribe', callback, topic, verify, verify_token)
+  def subscribe(callback, topic, verify, verify_token=nil, extra_params=nil)
+    post_as_subscriber('subscribe', callback, topic, verify, verify_token, extra_params)
   end
   
-  def unsubscribe(callback, topic, verify, verify_token=nil)
+  def unsubscribe(callback, topic, verify, verify_token=nil, extra_params=nil)
     post_as_subscriber('unsubscribe', callback, topic, verify, verify_token)
   end
   
@@ -26,7 +31,7 @@ class Hub
     post_as_publisher('publish', url)
   end
   
-  def post_as_subscriber(mode, callback, topic, verify, verify_token=nil)
+  def post_as_subscriber(mode, callback, topic, verify, verify_token=nil, extra_params=nil)
     form_data = {
       'hub.mode' => mode,
       'hub.callback' => callback,
@@ -41,6 +46,11 @@ class Hub
         form_data["hub.verify--.#{i}"] = v
       end
     end
+
+    if extra_params
+      form_data.update(extra_params)
+    end
+
     req = Net::HTTP::Post.new(@endpoint.path)
     req.form_data = form_data
     req.body = req.body.gsub(/\-\-\.\d/, '') # Part 2/2 of multivalue hack

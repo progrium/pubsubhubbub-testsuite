@@ -13,15 +13,15 @@ it's language independent.
 When you use this test suite, make sure that the HOST and SUB_PORT are within
 reach of the HUB_URL. If you chose a "public" HUB_URL, your HOST and SUB_PORT
 must be "public" too.
-
+ 
 You can also specify a specific topic url to test a given hub as not all hubs 
 accept all feed urls.
 
 Using the Test Suite:
 
-$ HUB_URL=<url to hub> [HOST=<subscriber host>] [SUB_PORT=<subscriber port>] [PUB_PORT=<publisher port>] [TOPIC_URL=<feed url>] spec -c hub_spec.rb --format specdoc
+$ HUB_URL=<url to hub> [HOST=<subscriber host>] [SUB_PORT=<subscriber port>] [PUB_PORT=<publisher port>] [TOPIC_URL=<feed url>] spec -c hub_*_spec.rb --format specdoc
 
 Example:
 
-$ HUB_URL=http://localhost:8000 HOST=localhost SUB_PORT=8098 spec -c hub_spec.rb --format specdoc
+$ HUB_URL=http://localhost:8000 HOST=localhost SUB_PORT=8098 spec -c hub_*_spec.rb --format specdoc
 

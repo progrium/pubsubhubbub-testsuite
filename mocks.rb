@@ -1,34 +1,42 @@
 require 'webrick'
 
 class Subscriber
-  HOST = ENV['HOST'] || "localhost"
-  PORT = Integer(ENV['SUB_PORT'] || 8089)
+  PORT = (ENV['SUB_PORT'] || 8089).to_i
   VERIFY_TOKEN = 'qfwef9'
   
   attr_reader :accept_callback_url, :refuse_callback_url
-  attr_accessor :onrequest
+  attr_accessor :on_request
   
   def initialize(hub)
     @hub = hub
     @server = WEBrick::HTTPServer.new(:Port => PORT, :Logger => WEBrick::Log.new(nil, 0), :AccessLog => WEBrick::Log.new(nil, 0))
-    @accept_callback_url = "http://#{HOST}:#{PORT}/accept_callback_url"
-    @refuse_callback_url = "http://#{HOST}:#{PORT}/refuse_callback_url"
-    @onrequest = lambda {|req|}
+    @accept_callback_url = "http://localhost:#{PORT}/accept_callback_url"
+    @refuse_callback_url = "http://localhost:#{PORT}/refuse_callback_url"
+
+    @on_request = lambda {|req,res|}
+
     mount "/accept_callback_url" do |req,res|
-      @onrequest.call(req)
-      res.status = 200
-      if req.request_method == 'GET' and /hub.challenge=([^$|&]+)/.match(req.query_string)
-        res.body = $1
+      desired_response = on_request.call(req, res)
+
+      desired_response = {} unless desired_response.respond_to?(:has_key?)
+      
+      if req.request_method == 'GET'
+        res.status = desired_response['status'] || 200
+
+        params = CGI.parse(req.query_string)
+        res.body = desired_response['body'] || params['hub.challenge'].last
       else
-        res.body = "Subscriber!"
+        res.status = 404
+        res.body = 'NOT THE CHALLENGE PARAMETER'
       end
     end
-    mount "/refuse_callback_url" do |req,res|
-      @onrequest.call(req)
+
+    mount "/refuse_callback_url" do |req, res|
+      on_request.call(req, res)
       res.status = 404
-      res.body = "Nope. I refuse this subscription"
+      res.body = "Nope. I refuse this subscription."
     end
-    
+
     @server_thread = Thread.new do 
       trap("INT"){ @server.shutdown }
       @server.start
@@ -45,14 +53,14 @@ class Subscriber
   end
 end
 
-
 class Publisher
-  HOST = ENV['HOST'] || "localhost"
-  PORT = Integer(ENV['PUB_PORT'] || 8088)
+  HOST = ENV['host'] || 'localhost'
+  PORT = (ENV['port'] || 8088).to_i
+
   
   attr_reader :content_url
   attr_reader :content
-  attr_accessor :onrequest
+  attr_accessor :on_request
   
   attr_accessor :last_request_method
   attr_accessor :last_headers
@@ -60,10 +68,10 @@ class Publisher
   def initialize(hub)
     @hub = hub
     @server = WEBrick::HTTPServer.new(:Port => PORT, :Logger => WEBrick::Log.new(nil, 0), :AccessLog => WEBrick::Log.new(nil, 0))
-    @content_url = "http://#{HOST}:#{PORT}/happycats.xml"
+    @content_url = "http://localhost:#{PORT}/happycats.xml"
     @last_request_method = nil
     @last_headers = nil
-    @onrequest = lambda {|req|}
+    @on_request = lambda {|req, res|}
     @content =<<EOF
 <?xml version="1.0"?>
 <feed>
@@ -117,7 +125,7 @@ class Publisher
 </feed>
 EOF
     mount "/happycats.xml" do |req,res|
-      @onrequest.call(req)
+      @on_request.call(req, res)
       @last_request_method = req.request_method
       @last_headers = req.header
       res.status = 200
