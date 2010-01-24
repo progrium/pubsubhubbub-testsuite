@@ -41,11 +41,9 @@ shared_examples_for "fully compliant hubs that obey request semantics" do
 
     doRequest(:verify => 'async', :params => {'hub.debug.retry_after' => 1})
 
-    # Give the hub 1.5 seconds to retry each time. We've included the
+    # Give the hub 2 seconds to retry each time. We've included the
     # debug.retry_after parameter to specify a retry interval of 1 second.
-    wait_on attempts, 1.5
-    wait_on attempts, 1.5
-    wait_on attempts, 1.5
+    wait_for(6) { attempts >= 3 }
 
     attempts.should >= 3
   end

@@ -61,8 +61,8 @@ describe Hub, "interface for publishers" do
     
     @publisher.last_request_method = nil
     @hub.publish(@topic_url)
-    sleep 1
-    wait_on @publisher.last_request_method
+
+    wait_for { @publisher.last_request_method != nil }
     @publisher.last_request_method.should == "GET"
   end
 

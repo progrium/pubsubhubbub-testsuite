@@ -5,11 +5,9 @@ require 'timeout'
 HUB_URL = ENV['HUB_URL']
 raise "Specify a hub URL by setting the HUB_URL environment variable." unless HUB_URL
 
-def wait_on(something, timeout = 3)
-  orig_something = something.dup rescue something
-
+def wait_for(timeout = 3)
   (timeout * 10).to_i.times do
-    break if something != orig_something
+    break if yield
     sleep 0.1
   end
 end
@@ -20,7 +18,6 @@ end
 
 shared_examples_for "all hubs with a publisher and subscriber" do
   before(:all) do
-    sleep 1
     @hub = Hub.new(HUB_URL)
     @publisher = Publisher.new(@hub)
     @subscriber = Subscriber.new(@hub)

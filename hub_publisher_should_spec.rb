@@ -23,7 +23,7 @@ describe Hub, "interface for publishers" do
     @publisher.last_headers = nil
     @hub.publish(@topic_url)
 
-    wait_on @publisher.last_headers
+    wait_for { @publisher.last_headers != nil }
     @publisher.last_headers.should include("X-Hub-Subscribers") rescue as_optional
   end
 

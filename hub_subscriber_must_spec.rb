@@ -91,7 +91,7 @@ shared_examples_for "compliant hubs that obey request semantics" do
 
       request.should be_nil
 
-      wait_on request
+      wait_for { request != nil }
 
       request.should_not be_nil
     end
