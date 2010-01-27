@@ -74,7 +74,7 @@ class Publisher
     @on_request = lambda {|req, res|}
     @content =<<EOF
 <?xml version="1.0"?>
-<feed>
+<feed xmlns="http://www.w3.org/2005/Atom">
   <!-- Normally here would be source, title, etc ... -->
 
   <link rel="hub" href="#{@hub.endpoint}" />
