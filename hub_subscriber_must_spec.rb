@@ -279,8 +279,39 @@ shared_examples_for "compliant hubs that obey request semantics" do
       end
     end
 
-    it "MUST NOT retry if the callback returns a 404 Not Found response"
-    it "MUST NOT change subscription state if asynchronous confirmations fail after an arbitrary number of retries" 
+    it "MUST NOT retry if the callback returns a 404 Not Found response" do
+      attempts = 0
+      @subscriber.on_request = lambda { |req, res|
+        attempts += 1
+        { 'status' => 404, 'body' => "I don't know what you're talking about." }
+      }
+
+      doRequest(:verify => 'async', :params => {'hub.debug.retry_after' => 1})
+
+      # Wait a few seconds for the hub to retry. To test a live hub, this delay
+      # must be increased to a sufficiently long amount of time to detect the retry.
+      wait_for(3) { attempts > 1 }
+
+      attempts.should == 1
+    end
+
+    it "MUST NOT change subscription state if asynchronous confirmations fail after an arbitrary number of retries" do
+      sub_status = @hub.subscription_status(@topic_url, @subscriber.accept_callback_url)
+      sub_status.should == 'none'
+
+      attempts = 0
+      @subscriber.on_request = lambda { |req, res|
+        attempts += 1
+        { 'status' => 500, 'body' => 'Internal Server Error' }
+      }
+      doRequest(:verify => 'async', :params => {'hub.debug.retry_after' => 1})
+
+      wait_for(6) { attempts >= 3 }
+      attempts.should >= 3
+
+      sub_status = @hub.subscription_status(@topic_url, @subscriber.accept_callback_url)
+      sub_status.should == 'none'
+    end
   end
 end
 
