@@ -67,13 +67,25 @@ describe Hub, "interface for publishers" do
   end
 
   # Section 7.3
-  it "MUST send subscribers notification via an HTTP POST request to their callback URL"
+  it "MUST send subscribers notification via an HTTP POST request to their callback URL" do
+    request = get_publish_notification
+    request.method.should == 'POST'
+  end
 
-  it "MUST send notification requests with a Content-Type of application/atom+xml"
+  it "MUST send notification requests with a Content-Type of application/atom+xml" do
+    request = get_publish_notification
+    request.headers['content-type'].should == 'application/atom+xml'
+  end
 
-  it "MUST include new and changed entries as an Atom feed document in the body of the notification"
+  it "MUST include new and changed entries as an Atom feed document in the body of the notification" do
+    request = get_publish_notification
+    pending("check content of atom entries to find changed content.")
+  end
 
-  it "MUST reproduce the atom:id element exactly"
+  it "MUST reproduce the atom:id element exactly" do
+    request = get_publish_notification
+    pending("verify atom:id elements")
+  end
   
   # Section 7.4
   context "with a hub.secret parameter" do
