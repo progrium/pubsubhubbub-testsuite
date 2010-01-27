@@ -77,7 +77,24 @@ describe Hub, "interface for publishers" do
   
   # Section 7.4
   context "with a hub.secret parameter" do
-    it "MUST generate an X-Hub-Signature header for notifications"
+    it "MUST generate an X-Hub-Signature header for notifications" do
+      @request_mode = 'subscribe'
+      secret = 'N0tPubl1cK'
+      doRequest(:params => {'hub.secret' => secret})
+
+      request = nil
+      @subscriber.on_request = lambda { |req, res| request = req }
+
+      @hub.publish(@topic_url)
+
+      wait_for { request != nil }
+
+      request.should_not be_nil
+      request.headers.should have_key('X-Hub-Signature')
+      pending do
+        request.headers['X-Hub-Signature'].should == HMAC::SHA1.hexdigest(secret, 'the-content')
+      end
+    end
   end
 
 end
