@@ -18,6 +18,21 @@ class Hub
     # This is for a hack to deal with non-auto running tasks on App Engine!?
     @is_gae = Net::HTTP.get(@endpoint.host, '/_ah/admin/queues', @endpoint.port).include?('Google')
   end
+
+  def subscription_status(topic, callback, secret = nil)
+    Net::HTTP.start(endpoint.host, endpoint.port) do |http|
+      qs = "#{endpoint.query}&" || ''
+      qs << "hub.mode=status&hub.callback=#{callback}&hub.topic=#{topic}"
+      qs << "&hub.secret=#{secret}" if (secret)
+      request = Net::HTTP::Get.new(endpoint.path + '?' + qs)
+      response = http.request(request)
+      if response.code.to_i == 200
+        return response.body
+      else
+        return nil
+      end
+    end
+  end
   
   def subscribe(callback, topic, verify, verify_token=nil, extra_params=nil)
     post_as_subscriber('subscribe', callback, topic, verify, verify_token, extra_params)

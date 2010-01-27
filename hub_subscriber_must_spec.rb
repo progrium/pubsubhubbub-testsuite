@@ -321,8 +321,28 @@ describe Hub do
     it_should_behave_like "compliant hubs that obey request semantics"
 
     # Section 6.1.2
-    it "MUST NOT activate an inactive subscription without verifying the request"
-    it "MUST allow re-subscription for an active subscription"
+    it "MUST NOT activate an inactive subscription without verifying the request" do
+      sub_status = @hub.subscription_status(@topic_url, @subscriber.accept_callback_url)
+      sub_status.should == 'none'
+
+      @subscriber.on_request = lambda { |req, res| {'status' => 500} }
+
+      doRequest.should be_a_kind_of(Net::HTTPClientError)
+
+      new_sub_status = @hub.subscription_status(@topic_url, @subscriber.accept_callback_url)
+      new_sub_status.should == 'none'
+    end
+
+    it "MUST allow re-subscription for an active subscription" do
+      sub_status = @hub.subscription_status(@topic_url, @subscriber.accept_callback_url)
+      sub_status.should == 'none'
+
+      doRequest.should be_a_kind_of(Net::HTTPNoContent)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'subscribed'
+
+      doRequest.should be_a_kind_of(Net::HTTPNoContent)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'subscribed'
+    end
   end
 
   context "when handling unsubscription requests" do
@@ -330,7 +350,21 @@ describe Hub do
     it_should_behave_like "compliant hubs that obey request semantics"
 
     # Section 6.1.2
-    it "MUST allow unsubscription from an active subscription"
-    it "MUST NOT de-activate a previously active subscription without verifying the request"
+    it "MUST allow unsubscription from an active subscription" do
+      doRequest.should be_a_kind_of(Net::HTTPNoContent)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'subscribed'
+
+      doRequest(:mode => 'unsubscribe').should be_a_kind_of(Net::HTTPNoContent)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'none'
+    end
+
+    it "MUST NOT de-activate a previously active subscription without verifying the request" do
+      doRequest.should be_a_kind_of(Net::HTTPNoContent)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'subscribed'
+
+      @subscriber.on_request = lambda { |req, res| {'status' => 500} }
+      doRequest(:mode => 'unsubscribe').should be_a_kind_of(Net::HTTPClientError)
+      @hub.subscription_status(@topic_url, @subscriber.accept_callback_url).should == 'subscribed'
+    end
   end
 end
