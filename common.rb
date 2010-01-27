@@ -47,3 +47,20 @@ def doRequest(opts = {})
     @hub.unsubscribe(opts[:callback], opts[:topic], opts[:verify], opts[:verify_token], opts[:params])
   end
 end
+
+def get_publish_notification
+  @request_mode = 'subscribe'
+  doRequest.should be_a_kind_of(Net::HTTPNoContent)
+
+  request = nil
+  @subscriber.on_request = lambda { |req, res| request = req }
+
+  @hub.publish(@topic_url)
+
+  wait_for { request != nil }
+
+  request.should_not be_nil
+  return request
+end
+
+
