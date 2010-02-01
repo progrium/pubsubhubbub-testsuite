@@ -104,7 +104,8 @@ describe Hub, "interface for publishers" do
       request.should_not be_nil
       request.headers.should have_key('X-Hub-Signature')
       pending do
-        request.headers['X-Hub-Signature'].should == HMAC::SHA1.hexdigest(secret, 'the-content')
+        signature = HMAC::SHA1.hexdigest(secret, 'the-content')
+        request.headers['X-Hub-Signature'].should == "sha1=#{signature}"
       end
     end
   end
