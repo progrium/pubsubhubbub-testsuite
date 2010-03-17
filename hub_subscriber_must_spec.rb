@@ -81,15 +81,13 @@ shared_examples_for "compliant hubs that obey request semantics" do
 
     it "MUST make an asynchronous verification attempt if only the 'async' verify mode is allowed" do
       request = nil
-      @subscriber.on_request = lambda { |req, res| request = req; nil }
+      @subscriber.on_request = lambda { |req, res| request = req; {'status' => 500} }
 
       doRequest(:verify => 'async').should be_a_kind_of(Net::HTTPAccepted)
 
       # As with the previous test, the timing is a bit tricky here, but without ripping the whole
       # stack apart, let's build in some assumptions and assume that for an async request, the HTTP
       # request won't have been sent instantaneously, but will be sent in some small amount of time.
-
-      request.should be_nil
 
       wait_for { request != nil }
 
@@ -171,6 +169,7 @@ shared_examples_for "compliant hubs that obey request semantics" do
     end
 
     it "MUST return 202 Accepted if the request is pending" do
+      @subscriber.on_request = lambda { |req, res| {'status' => 500} }
       doRequest(:verify => 'async').should be_a_kind_of(Net::HTTPAccepted)
     end
 
