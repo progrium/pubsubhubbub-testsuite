@@ -81,7 +81,8 @@ describe Hub, "interface for publishers" do
     @hub.publish(@topic_url)
 
     wait_for { attempts >= 2 }
-    pending 'check to ensure that the content notification came through'
+
+    attempts.should > 2
   end
 
 end
