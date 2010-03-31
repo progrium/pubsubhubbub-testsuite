@@ -26,6 +26,7 @@ shared_examples_for "all hubs with a publisher and subscriber" do
 
   before(:each) do
     @subscriber.on_request = lambda { |req, res| }
+    @hub.reset_hub!
   end
 
   after(:all) do

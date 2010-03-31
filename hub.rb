@@ -17,6 +17,10 @@ class Hub
     
     # This is for a hack to deal with non-auto running tasks on App Engine!?
     @is_gae = Net::HTTP.get(@endpoint.host, '/_ah/admin/queues', @endpoint.port).include?('Google')
+
+    if ENV['HUB_RESET_URL']
+      @hub_reset_url = URI.parse(ENV['HUB_RESET_URL'])
+    end
   end
 
   def subscription_status(topic, callback, secret = nil)
@@ -90,5 +94,10 @@ class Hub
     return unless payload
     Net::HTTP.start(@endpoint.host, @endpoint.port) {|http| http.request_post('/work/pull_feeds', payload, {'X-AppEngine-Development-Payload'=>'1'}) }
     page.form_with(:action => '/_ah/admin/tasks').click_button # Delete the task
+  end
+
+  def reset_hub!
+    return unless @hub_reset_url
+    Net::HTTP.get(@hub_reset_url.host, @hub_reset_url.path, @hub_reset_url.port)
   end
 end
