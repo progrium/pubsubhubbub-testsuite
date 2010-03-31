@@ -57,7 +57,6 @@ class Publisher
   HOST = ENV['PUB_HOST'] || 'localhost'
   PORT = (ENV['PUB_PORT'] || 8088).to_i
 
-  
   attr_reader :content_url
   attr_reader :content
   attr_accessor :on_request
@@ -72,58 +71,7 @@ class Publisher
     @last_request_method = nil
     @last_headers = nil
     @on_request = lambda {|req, res|}
-    @content =<<EOF
-<?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-  <!-- Normally here would be source, title, etc ... -->
-
-  <link rel="hub" href="#{@hub.endpoint}" />
-  <link rel="self" href="#{@content_url}" />
-  <updated>2008-08-11T02:15:01Z</updated>
-
-  <!-- Example of a full entry. -->
-  <entry>
-    <title>Heathcliff</title>
-    <link href="http://publisher.example.com/happycat25.xml" />
-    <id>http://publisher.example.com/happycat25.xml</id>
-    <updated>2008-08-11T02:15:01Z</updated>
-    <content>
-      What a happy cat. Full content goes here.
-    </content>
-  </entry>
-
-  <!-- Example of an entity that isn't full/is truncated. This is implied
-       by the lack of a <content> element and a <summary> element instead. -->
-  <entry >
-    <title>Heathcliff</title>
-    <link href="http://publisher.example.com/happycat25.xml" />
-    <id>http://publisher.example.com/happycat25.xml</id>
-    <updated>2008-08-11T02:15:01Z</updated>
-    <summary>
-      What a happy cat!
-    </summary>
-  </entry>
-
-  <!-- Meta-data only; implied by the lack of <content> and
-       <summary> elements. -->
-  <entry>
-    <title>Garfield</title>
-    <link rel="alternate" href="http://publisher.example.com/happycat24.xml" />
-    <id>http://publisher.example.com/happycat25.xml</id>
-    <updated>2008-08-11T02:15:01Z</updated>
-  </entry>
-
-  <!-- Context entry that's meta-data only and not new. Implied because the
-       update time on this entry is before the //atom:feed/updated time. -->
-  <entry>
-    <title>Nermal</title>
-    <link rel="alternate" href="http://publisher.example.com/happycat23s.xml" />
-    <id>http://publisher.example.com/happycat25.xml</id>
-    <updated>2008-07-10T12:28:13Z</updated>
-  </entry>
-
-</feed>
-EOF
+    set_content(:first)
     mount "/happycats.xml" do |req,res|
       @on_request.call(req, res)
       @last_request_method = req.request_method
@@ -140,6 +88,12 @@ EOF
   
   def mount(path, &block)
     @server.mount(path, WEBrick::HTTPServlet::ProcHandler.new(block))
+  end
+
+  def set_content(which, format = 'atom')
+    raw_content = File.read("feeds/#{which}.#{format}")
+    escaped_content = "'#{raw_content.gsub(/'/m, '\\\\\'')}'"
+    @content = eval(escaped_content)
   end
   
   def stop

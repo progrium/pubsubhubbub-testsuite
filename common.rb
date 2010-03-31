@@ -49,18 +49,21 @@ def doRequest(opts = {})
   end
 end
 
-def get_publish_notification
+def get_publish_notification(feed = 'first', format = 'atom')
+  @publisher.set_content(feed, format)
+
   @request_mode = 'subscribe'
   doRequest.should be_a_kind_of(Net::HTTPNoContent)
 
   request = nil
-  @subscriber.on_request = lambda { |req, res| request = req }
+  @subscriber.on_request = lambda { |req, res| req.body; request = req }
 
   @hub.publish(@topic_url)
 
   wait_for { request != nil }
 
   request.should_not be_nil
+  request.body.should_not be_nil
   return request
 end
 
