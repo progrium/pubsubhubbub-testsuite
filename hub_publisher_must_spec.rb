@@ -70,12 +70,12 @@ describe Hub, "interface for publishers" do
   # Section 7.3
   it "MUST send subscribers notification via an HTTP POST request to their callback URL" do
     request = get_publish_notification
-    request.method.should == 'POST'
+    request.request_method.should == 'POST'
   end
 
   it "MUST send notification requests with a Content-Type of application/atom+xml" do
     request = get_publish_notification
-    request.headers['content-type'].should == 'application/atom+xml'
+    request.header['content-type'].should == ['application/atom+xml']
   end
 
   it "MUST include new entries as an Atom feed document in the body of the notification" do
@@ -131,7 +131,7 @@ describe Hub, "interface for publishers" do
       doRequest(:params => {'hub.secret' => secret})
 
       request = nil
-      @subscriber.on_request = lambda { |req, res| request = req }
+      @subscriber.on_request = lambda { |req, res| req.body; request = req }
 
       @hub.publish(@topic_url)
 

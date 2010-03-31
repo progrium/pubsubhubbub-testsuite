@@ -22,7 +22,7 @@ describe Hub, "interface for publishers" do
     wait_for { request != nil }
     request.should_not be_nil
 
-    request.method.should == 'GET'
+    request.request_method.should == 'GET'
   end
 
   it "SHOULD include a header field X-Hub-Subscribers whose value is an integer in content fetch request" do
