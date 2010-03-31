@@ -44,12 +44,22 @@ describe Hub, "interface for publishers" do
 
   it "SHOULD include atom:updated in the feed" do
     publish = get_publish_notification
-    pending 'verify presence of atom:updated'
+    feed = Nokogiri.parse(publish.body)
+
+    updated = feed.search('feed/updated')
+    updated.length.should == 1
+
+    updated.first.content.should == '2008-08-11T02:15:01Z'
   end
 
   it "SHOULD include atom:title in the feed" do
     publish = get_publish_notification
-    pending 'verify presence of atom:title'
+    feed = Nokogiri.parse(publish.body)
+
+    title = feed.search('feed/title')
+    title.length.should == 1
+
+    title.first.content.should == 'Lasagne Cat'
   end
 
   it "SHOULD retry notifications until successful" do

@@ -1,4 +1,5 @@
 require 'common'
+require 'nokogiri'
 
 # Publishing
 # http://pubsubhubbub.googlecode.com/svn/trunk/pubsubhubbub-core-0.2.html#publishing
@@ -77,14 +78,49 @@ describe Hub, "interface for publishers" do
     request.headers['content-type'].should == 'application/atom+xml'
   end
 
-  it "MUST include new and changed entries as an Atom feed document in the body of the notification" do
+  it "MUST include new entries as an Atom feed document in the body of the notification" do
     request = get_publish_notification
-    pending("check content of atom entries to find changed content.")
+    feed = Nokogiri.parse(request.body)
+
+    feed.search('entry').length.should == 4
+
+    request = get_publish_notification('newentry')
+    feed = Nokogiri.parse(request.body)
+
+    new_entries = feed.search('entry')
+    new_entries.length.should == 1
+    new_entries.first.search('id').first.content.should == 'http://publisher.example.com/happycat26.xml'
+  end
+
+  it "MUST include changed entries as an Atom feed document in the body of the notification" do
+    request = get_publish_notification
+    feed = Nokogiri.parse(request.body)
+
+    feed.search('entry').length.should == 4
+
+    request = get_publish_notification('updatedentry')
+    feed = Nokogiri.parse(request.body)
+
+    updated_entries = feed.search('entry')
+    updated_entries.length.should == 1
+    updated_entries.first.search('id').first.content.should == ''
   end
 
   it "MUST reproduce the atom:id element exactly" do
+    origfeed = Nokogiri.parse(@publisher.instance_variable_get('@content'))
+    origids = origfeed.search('entry').map { |elem|
+      elem.search('id').first.content
+    }
+
     request = get_publish_notification
-    pending("verify atom:id elements")
+
+    feed = Nokogiri.parse(request.body)
+
+    ids = feed.search('entry').map { |elem|
+      elem.search('id').first.content
+    }
+
+    ids.should == origids
   end
   
   # Section 7.4
