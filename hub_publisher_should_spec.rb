@@ -71,8 +71,8 @@ describe Hub, "interface for publishers" do
     @subscriber.on_request = lambda { |req, res|
       request = req
       attempts += 1
-      if attempts >= 2
-        nil # allow the default (successful) response
+      if attempts > 2
+        nil # allow the default (failure) response
       else
         {'status' => '500', 'body' => 'temporarily broken'}
       end

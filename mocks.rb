@@ -26,8 +26,8 @@ class Subscriber
         params = CGI.parse(req.query_string)
         res.body = desired_response['body'] || params['hub.challenge'].last
       else
-        res.status = 404
-        res.body = 'NOT THE CHALLENGE PARAMETER'
+        res.status = desired_response['status'] || 404 
+        res.body = desired_response['body'] || 'NOT THE CHALLENGE PARAMETER'
       end
     end
 
